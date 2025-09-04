@@ -1,0 +1,14 @@
+# maillog-js:
+#   filter: rjsmin
+#   output: ckanext-maillog/%(version)s-maillog.js
+#   contents:
+#     - js/maillog.js
+#   extra:
+#     preload:
+#       - base/main
+
+# maillog-css:
+#   filter: cssrewrite
+#   output: ckanext-maillog/%(version)s-maillog.css
+#   contents:
+#     - css/maillog.css
