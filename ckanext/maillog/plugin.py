@@ -1,6 +1,7 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
+from ckanext.maillog.cli import get_commands
 
 from logging.handlers import SMTPHandler
 from logging import FileHandler
@@ -13,11 +14,41 @@ log = logging.getLogger(__name__)
 class MaillogPlugin(plugins.SingletonPlugin):
 
     plugins.implements(plugins.IMiddleware, inherit=True)
+    plugins.implements(plugins.IClick)
+
+    def get_commands(self):
+        return get_commands()
 
     def make_middleware(self, app, config):
         CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", True))
+        CKAN_MAILLOG_ENABLE_DIGEST = toolkit.asbool(config.get("ckanext.maillog.digest", True))
+        if CKAN_MAILLOG_ENABLE_DIGEST:
+            self.make_maillog_digest_middleware(app, config)
         if CKAN_MAILLOG_ENABLE_ALERT:
             self.make_maillog_alert_middleware(app, config)
+        return app
+
+    def make_maillog_digest_middleware(self, app, config):
+        CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME = self._parse_log_level_name("ckanext.maillog.digest.log_level", logging.getLevelName(logging.WARNING))
+        CKAN_MAILLOG_DIGEST_LOGGERS = config.get("ckanext.maillog.digest.loggers", None)
+
+        CKAN_MAILLOG_DIGEST_LOG_PATH = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
+        Path(CKAN_MAILLOG_DIGEST_LOG_PATH).parent.mkdir(parents=True, exist_ok=True)
+
+        file_handler = FileHandler(CKAN_MAILLOG_DIGEST_LOG_PATH)
+        file_handler.setLevel(CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME)
+        file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-5.5s [%(name)s] %(message)s"))
+
+        if CKAN_MAILLOG_DIGEST_LOGGERS:
+            loggers = CKAN_MAILLOG_DIGEST_LOGGERS.split()
+        else:
+            loggers = ["", "ckan", "ckanext", "ckanext.maillog"]
+        for name in loggers:
+            logger = logging.getLogger(name)
+            logger.addHandler(file_handler)
+
+        log.debug('Adding Maillog digest middleware...')
+
         return app
 
     def make_maillog_alert_middleware(self, app, config):
