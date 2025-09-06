@@ -15,7 +15,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IMiddleware, inherit=True)
 
     def make_middleware(self, app, config):
-        CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", True))
+        CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", False))
         if CKAN_MAILLOG_ENABLE_ALERT:
             self.make_maillog_alert_middleware(app, config)
         return app
@@ -43,15 +43,14 @@ class MaillogPlugin(plugins.SingletonPlugin):
             mailhost=mailhost,
             fromaddr=config.get('error_email_from'),
             toaddrs=[CKAN_MAILLOG_ALERT_TO],
-            subject='Logging',
+            subject='CKAN Event Report',
             credentials=credentials,
             secure=secure
         )
         mail_handler.setLevel(logging.ERROR)
 
         if CKAN_MAILLOG_ALERT_LOGGERS:
-            loggers = ["", "ckan", "ckanext"]
-            # loggers = CKAN_MAILLOG_ALERT_LOGGERS.split()
+            loggers = CKAN_MAILLOG_ALERT_LOGGERS.split()
         else:
             loggers = ["", "ckan", "ckanext", "maillog.errors"]
         for name in loggers:
@@ -59,8 +58,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
             logger.setLevel(CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME)
             logger.addHandler(mail_handler)
 
-        log.debug('Adding Maillog alert middleware...')
-        # app.logger.addHandler(mail_handler)
+        log.debug("Adding Maillog alert middleware...")
 
         return app
 
