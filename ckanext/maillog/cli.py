@@ -29,7 +29,7 @@ def send_logs(cleanup):
     """
     smtp_server = toolkit.config.get("smtp.server", "localhost:25")
     from_addr = toolkit.config.get("error_email_from", "ckan@example.org")
-    to_addr = toolkit.config.get("email_to", "admin@example.org")
+    to_addr = toolkit.config.get("ckanext.maillog.digest.to", "admin@example.org")
     subject = "CKAN Debug Log"
 
     if ":" in smtp_server:
@@ -38,7 +38,7 @@ def send_logs(cleanup):
     else:
         mailhost = smtp_server
 
-    CKAN_MAILLOG_DIGEST_LOG_PATH = toolkit.config.get("ckanext.maillog.log_path", "/srv/app/log/maillog/debug.log")
+    CKAN_MAILLOG_DIGEST_LOG_PATH = toolkit.config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
     with open(CKAN_MAILLOG_DIGEST_LOG_PATH, "r") as f:
         body = f.read().strip()
     if not body.strip():
