@@ -21,7 +21,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
 
     def make_middleware(self, app, config):
         CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", True))
-        CKAN_MAILLOG_ENABLE_DIGEST = toolkit.asbool(config.get("ckanext.maillog.digest", True))
+        CKAN_MAILLOG_ENABLE_DIGEST = toolkit.asbool(config.get("ckanext.maillog.digest", False))
         if CKAN_MAILLOG_ENABLE_DIGEST:
             self.make_maillog_digest_middleware(app, config)
         if CKAN_MAILLOG_ENABLE_ALERT:
@@ -47,7 +47,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
             logger = logging.getLogger(name)
             logger.addHandler(file_handler)
 
-        log.debug('Adding Maillog digest middleware...')
+        log.debug("Adding Maillog digest middleware...")
 
         return app
 
