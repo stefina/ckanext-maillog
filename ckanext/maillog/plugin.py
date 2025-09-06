@@ -47,7 +47,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
             credentials=credentials,
             secure=secure
         )
-        mail_handler.setLevel(logging.ERROR)
+        mail_handler.setLevel(CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME)
 
         if CKAN_MAILLOG_ALERT_LOGGERS:
             loggers = CKAN_MAILLOG_ALERT_LOGGERS.split()
@@ -55,7 +55,6 @@ class MaillogPlugin(plugins.SingletonPlugin):
             loggers = ["", "ckan", "ckanext", "maillog.errors"]
         for name in loggers:
             logger = logging.getLogger(name)
-            logger.setLevel(CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME)
             logger.addHandler(mail_handler)
 
         log.debug("Adding Maillog alert middleware...")
