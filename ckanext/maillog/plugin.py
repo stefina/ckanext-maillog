@@ -84,7 +84,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
             loggers = ["", "ckan", "ckanext"]
             # loggers = CKAN_MAILLOG_ALERT_LOGGERS.split()
         else:
-            loggers = ["", "ckan", "ckanext", "maillog.errors"]
+            loggers = ["", "ckan", "ckanext"]
         for name in loggers:
             logger = logging.getLogger(name)
             logger.setLevel(CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME)
