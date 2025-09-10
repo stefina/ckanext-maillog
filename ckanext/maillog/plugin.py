@@ -3,8 +3,7 @@ import ckan.plugins.toolkit as toolkit
 
 from ckanext.maillog.cli import get_commands
 
-from logging.handlers import SMTPHandler
-from logging import FileHandler
+from logging.handlers import SMTPHandler, RotatingFileHandler
 import logging
 from pathlib import Path
 
@@ -31,11 +30,19 @@ class MaillogPlugin(plugins.SingletonPlugin):
     def make_maillog_digest_middleware(self, app, config):
         CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME = self._parse_log_level_name("ckanext.maillog.digest.log_level", logging.getLevelName(logging.WARNING))
         CKAN_MAILLOG_DIGEST_LOGGERS = config.get("ckanext.maillog.digest.loggers", None)
+        CKAN_MAILLOG_DIGEST_MAX_BYTES = int(config.get("ckanext.maillog.digest.max_bytes", 0.2 * 1024 * 1024))  # 5 MB
+        CKAN_MAILLOG_DIGEST_BACKUP_COUNT = int(config.get("ckanext.maillog.digest.backup_count", 1))
 
         CKAN_MAILLOG_DIGEST_LOG_PATH = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
         Path(CKAN_MAILLOG_DIGEST_LOG_PATH).parent.mkdir(parents=True, exist_ok=True)
 
-        file_handler = FileHandler(CKAN_MAILLOG_DIGEST_LOG_PATH)
+        file_handler = RotatingFileHandler(
+            CKAN_MAILLOG_DIGEST_LOG_PATH,
+            maxBytes=CKAN_MAILLOG_DIGEST_MAX_BYTES,
+            backupCount=CKAN_MAILLOG_DIGEST_BACKUP_COUNT,
+            encoding="utf-8",
+            delay=True
+        )
         file_handler.setLevel(CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME)
         file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-5.5s [%(name)s] %(message)s"))
 
