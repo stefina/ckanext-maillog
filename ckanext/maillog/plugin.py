@@ -30,7 +30,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
     def make_maillog_digest_middleware(self, app, config):
         CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME = self._parse_log_level_name("ckanext.maillog.digest.log_level", logging.getLevelName(logging.WARNING))
         CKAN_MAILLOG_DIGEST_LOGGERS = config.get("ckanext.maillog.digest.loggers", None)
-        CKAN_MAILLOG_DIGEST_MAX_BYTES = int(config.get("ckanext.maillog.digest.max_bytes", 0.2 * 1024 * 1024))  # 5 MB
+        CKAN_MAILLOG_DIGEST_MAX_BYTES = int(config.get("ckanext.maillog.digest.max_bytes", 5 * 1024 * 1024))  # 5 MB
         CKAN_MAILLOG_DIGEST_BACKUP_COUNT = int(config.get("ckanext.maillog.digest.backup_count", 1))
 
         CKAN_MAILLOG_DIGEST_LOG_PATH = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
