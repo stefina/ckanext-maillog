@@ -2,15 +2,75 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
 
+from logging.handlers import SMTPHandler
+from logging import FileHandler
+import logging
+from pathlib import Path
+
+log = logging.getLogger(__name__)
+
+
 class MaillogPlugin(plugins.SingletonPlugin):
-    plugins.implements(plugins.IConfigurer)
-    
 
-    # IConfigurer
+    plugins.implements(plugins.IMiddleware, inherit=True)
 
-    def update_config(self, config_):
-        toolkit.add_template_directory(config_, "templates")
-        toolkit.add_public_directory(config_, "public")
-        toolkit.add_resource("assets", "maillog")
+    def make_middleware(self, app, config):
+        CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", False))
+        if CKAN_MAILLOG_ENABLE_ALERT:
+            self.make_maillog_alert_middleware(app, config)
+        return app
 
-    
+    def make_maillog_alert_middleware(self, app, config):
+
+        CKAN_MAILLOG_ALERT_LOGGERS = config.get("ckanext.maillog.alert.loggers", None)
+        CKAN_MAILLOG_ALERT_TO = config.get("ckanext.maillog.alert.to", config.get('email_to'))
+        CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME = self._parse_log_level("ckanext.maillog.alert.log_level", "ERROR")
+
+        smtp_server = config.get('smtp.server')
+        if ":" in smtp_server:
+            host, port = smtp_server.rsplit(":", 1)
+            mailhost = host, int(port)
+        else:
+            mailhost = smtp_server
+        credentials = None
+        if config.get('smtp.user'):
+            credentials = (
+                config.get('smtp.user'),
+                config.get('smtp.password')
+            )
+        secure = () if config.get('smtp.starttls') else None
+        mail_handler = SMTPHandler(
+            mailhost=mailhost,
+            fromaddr=config.get('error_email_from'),
+            toaddrs=[CKAN_MAILLOG_ALERT_TO],
+            subject='CKAN Event Report',
+            credentials=credentials,
+            secure=secure
+        )
+        mail_handler.setLevel(CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME)
+
+        if CKAN_MAILLOG_ALERT_LOGGERS:
+            loggers = CKAN_MAILLOG_ALERT_LOGGERS.split()
+        else:
+            loggers = ["", "ckan", "ckanext", "maillog.errors"]
+        for name in loggers:
+            logger = logging.getLogger(name)
+            logger.addHandler(mail_handler)
+
+        log.debug("Adding Maillog alert middleware...")
+
+        return app
+
+    def _parse_log_level(self, conf, default):
+        raw_level = toolkit.config.get(conf, default)
+        if isinstance(raw_level, int):
+            return raw_level
+
+        string_level = str(raw_level).strip().upper()
+        if string_level.isdigit():
+            return int(string_level)
+
+        level = logging.getLevelName(string_level)
+        if level is not None:
+            return level
+        return logging.getLevelName(str(default).upper())

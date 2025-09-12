@@ -2,38 +2,46 @@
 
 # ckanext-maillog
 
-**TODO:** Put a description of your extension here:  What does it do? What features does it have? Consider including some screenshots or embedding a video!
+**ckanext-maillog** adds email-based logging to CKAN.
+It provides two complementary features that you can use independently or together:
 
+- Email alerts – immediately send selected log messages (based on logger and level) to a configured recipient.
+
+- Log digests – accumulate log messages from specific loggers into a file that can be delivered later (e.g. via a CLI command or cron).
+
+This makes it easier to debug extensions and to set up targeted monitoring for critical events.
+
+### Email alerts
+
+Use this mode to send important log events immediately by email. You can configure one or more loggers and a minimum log level (for example, WARNING or ERROR). Whenever a matching log record is emitted, an email is sent right away to the configured recipient.
+
+This is useful for catching critical issues as they happen — for example, when a new harvester plugin fails to connect to a source, or when a CKAN extension logs warnings that you want to be notified about without delay.
+
+### Log digests
+
+In digest mode, log messages are collected into a designated file instead of being emailed one by one. Later, you can trigger a command (or run it via cron) to send the accumulated messages as a single email.
+
+This is especially handy for debugging when:
+
+- You want to capture lower-level messages such as DEBUG or INFO without getting flooded by individual alert emails.
+
+- You don’t have direct access to log files on the server but still want to review the output of a specific logger.
+
+- You’re developing a new plugin and need to review its behavior over a period of time.
+
+Each digest email contains all log messages from the configured loggers since the last time the digest was sent.
 
 ## Requirements
 
-**TODO:** For example, you might want to mention here which versions of CKAN this
-extension works with.
-
-If your extension works across different versions you can add the following table:
-
 Compatibility with core CKAN versions:
 
-| CKAN version    | Compatible?   |
-| --------------- | ------------- |
-| 2.6 and earlier | not tested    |
-| 2.7             | not tested    |
-| 2.8             | not tested    |
-| 2.9             | not tested    |
-
-Suggested values:
-
-* "yes"
-* "not tested" - I can't think of a reason why it wouldn't work
-* "not yet" - there is an intention to get it working
-* "no"
-
+| CKAN version | Compatible? |
+|--------------|-------------|
+| 2.9          | not tested  |
+| 2.10         | not tested  |
+| 2.11         | yes         |
 
 ## Installation
-
-**TODO:** Add any additional install steps to the list below.
-   For example installing any non-Python dependencies or adding any required
-   config settings.
 
 To install ckanext-maillog:
 
@@ -52,20 +60,53 @@ To install ckanext-maillog:
    config file (by default the config file is located at
    `/etc/ckan/default/ckan.ini`).
 
-4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu:
+4. Add all required configurations to your configuration as described below.
+
+4. Make sure to [configure an STMP-Email-Server](https://docs.ckan.org/en/latest/maintaining/configuration.html#email-settings).
+
+5. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu:
 
      sudo service apache2 reload
 
 
 ## Config settings
 
-None at present
+Configuration for instant email alerts:
 
-**TODO:** Document any optional config settings here. For example:
+    # Enable or disable instant email alerts 
+    # (optional, default: false).
+    ckanext.maillog.alert = true
+   
+    # List of loggers to monitor for alerts (space-separated).
+    # (optional, default: "" ckan ckanext).
+    ckanext.maillog.alert.loggers = ckanext.mycustomharvester ckanext.harvest ckanext.dcat
+   
+    # Minimum log level for alerts 
+    # (optional, default: ERROR).
+    ckanext.maillog.alert.log_level = WARNING
+   
+    # Recipient address for alert emails.
+    # (mandatory)
+    ckanext.maillog.alert.to = alert@alert.com
 
-	# The minimum number of hours to wait before re-checking a resource
-	# (optional, default: 24).
-	ckanext.maillog.some_setting = some_default_value
+Configuration for log digests per email:   
+   
+    # Enable or disable digest logging
+    # (optional, default: false).
+    ckanext.maillog.digest = true
+   
+    # List of loggers to include in the digest (space-separated).
+    # (optional, default: ckan ckanext).
+    ckanext.maillog.digest.loggers = ckanext.mycustomharvester ckanext.harvest ckanext.dcat
+    # Adding `""` will also include the root-logger.
+    ckanext.maillog.digest.loggers = "" ckanext.mycustomharvester ckanext.harvest ckanext.dcat
+   
+    # Minimum log level for digest logging (optional, default: WARNING).
+    ckanext.maillog.digest.log_level = DEBUG
+   
+    # Recipient address for digest emails.
+    # (mandatory)
+    ckanext.maillog.digest.to = digest@digest.com
 
 
 ## Developer installation
