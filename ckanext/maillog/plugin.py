@@ -52,7 +52,7 @@ class MaillogPlugin(plugins.SingletonPlugin):
 
         CKAN_MAILLOG_ALERT_LOGGERS = config.get("ckanext.maillog.alert.loggers", None)
         CKAN_MAILLOG_ALERT_TO = config.get("ckanext.maillog.alert.to", config.get('email_to'))
-        CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME = self._parse_log_level_name("ckanext.maillog.alert.log_level", logging.getLevelName(logging.ERROR))
+        CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME = self._parse_log_level("ckanext.maillog.alert.log_level", "ERROR")
 
         smtp_server = config.get('smtp.server')
         if ":" in smtp_server:
@@ -89,10 +89,16 @@ class MaillogPlugin(plugins.SingletonPlugin):
 
         return app
 
-    def _parse_log_level_name(self, conf, default):
-        raw_level = self._parse_log_level_int(conf, default)
-        name = str(raw_level).strip().upper()
-        return logging.getLevelName(name)
+    def _parse_log_level(self, conf, default):
+        raw_level = toolkit.config.get(conf, default)
+        if isinstance(raw_level, int):
+            return raw_level
 
-    def _parse_log_level_int(self, conf, default):
-        return toolkit.config.get(conf, default)
+        string_level = str(raw_level).strip().upper()
+        if string_level.isdigit():
+            return int(string_level)
+
+        level = logging.getLevelName(string_level)
+        if level is not None:
+            return level
+        return logging.getLevelName(str(default).upper())
