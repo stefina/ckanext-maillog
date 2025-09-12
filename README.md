@@ -118,6 +118,15 @@ Configuration for log digests per email:
     # Full path of the digest log 
     # (optional, default: /srv/app/log/maillog/debug.log).
     ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/debug.log
+
+    # Max bytes of digest-log-file to be kept 
+    # (optional, default: 5 MB).
+    ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/debug.log
+    ckanext.maillog.digest.max_bytes=200000
+
+    # Maximum number of backup digest-log-files to be kept
+    # (optional, default: 1).
+    ckanext.maillog.digest.backup_count = 2
    
     # Recipient address for digest emails.
     # (mandatory)
