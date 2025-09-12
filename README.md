@@ -11,13 +11,13 @@ It provides two complementary features that you can use independently or togethe
 
 This makes it easier to debug extensions and to set up targeted monitoring for critical events.
 
-### Email alerts
+## Email alerts
 
 Use this mode to send important log events immediately by email. You can configure one or more loggers and a minimum log level (for example, WARNING or ERROR). Whenever a matching log record is emitted, an email is sent right away to the configured recipient.
 
 This is useful for catching critical issues as they happen — for example, when a new harvester plugin fails to connect to a source, or when a CKAN extension logs warnings that you want to be notified about without delay.
 
-### Log digests
+## Log digests
 
 In digest mode, log messages are collected into a designated file instead of being emailed one by one. Later, you can trigger a command (or run it via cron) to send the accumulated messages as a single email.
 
@@ -30,6 +30,16 @@ This is especially handy for debugging when:
 - You’re developing a new plugin and need to review its behavior over a period of time.
 
 Each digest email contains all log messages from the configured loggers since the last time the digest was sent.
+
+### Log Digest Cli Command
+
+To send all previously accumulated log messages of the configured loggers since the last time the digest was sent.
+
+It is meant to be run regularly by a cronjob. It is recommended to run it with the cleanup option which clears the file after the logs have been sent.
+
+```bash
+ckan maillog send_logs --cleanup 
+```
 
 ## Requirements
 
@@ -101,8 +111,13 @@ Configuration for log digests per email:
     # Adding `""` will also include the root-logger.
     ckanext.maillog.digest.loggers = "" ckanext.mycustomharvester ckanext.harvest ckanext.dcat
    
-    # Minimum log level for digest logging (optional, default: WARNING).
+    # Minimum log level for digest logging 
+    # (optional, default: WARNING).
     ckanext.maillog.digest.log_level = DEBUG
+
+    # Full path of the digest log 
+    # (optional, default: /srv/app/log/maillog/debug.log).
+    ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/debug.log
    
     # Recipient address for digest emails.
     # (mandatory)
