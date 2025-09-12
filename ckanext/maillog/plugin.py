@@ -21,12 +21,15 @@ class MaillogPlugin(plugins.SingletonPlugin):
 
     def make_middleware(self, app, config):
         CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", False))
+        CKAN_MAILLOG_ENABLE_DIGEST = toolkit.asbool(config.get("ckanext.maillog.digest", False))
+        if CKAN_MAILLOG_ENABLE_DIGEST:
+            self.make_maillog_digest_middleware(app, config)
         if CKAN_MAILLOG_ENABLE_ALERT:
             self.make_maillog_alert_middleware(app, config)
         return app
 
     def make_maillog_digest_middleware(self, app, config):
-        CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME = self._parse_log_level_name("ckanext.maillog.digest.log_level", logging.getLevelName(logging.WARNING))
+        CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME = self._parse_log_level("ckanext.maillog.digest.log_level", "WARNING")
         CKAN_MAILLOG_DIGEST_LOGGERS = config.get("ckanext.maillog.digest.loggers", None)
 
         CKAN_MAILLOG_DIGEST_LOG_PATH = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
