@@ -38,8 +38,8 @@ def send_logs(cleanup):
     else:
         mailhost = smtp_server
 
-    CKAN_MAILLOG_DIGEST_LOG_PATH = toolkit.config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
-    with open(CKAN_MAILLOG_DIGEST_LOG_PATH, "r") as f:
+    digest_log_path = toolkit.config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
+    with open(digest_log_path, "r") as f:
         body = f.read().strip()
     if not body.strip():
         click.echo("No log messages have been recorded since the last run.")
@@ -61,8 +61,8 @@ def send_logs(cleanup):
 
         smtp.sendmail(from_addr, [to_addr], msg.as_string())
 
-    click.echo(f"Sent {CKAN_MAILLOG_DIGEST_LOG_PATH} to {to_addr} via {smtp_server}")
+    click.echo(f"Sent {digest_log_path} to {to_addr} via {smtp_server}")
 
     if cleanup:
-        click.echo(f"Cleaning up {CKAN_MAILLOG_DIGEST_LOG_PATH}")
-        open(CKAN_MAILLOG_DIGEST_LOG_PATH, "w").close()
+        click.echo(f"Cleaning up {digest_log_path}")
+        open(digest_log_path, "w").close()
