@@ -125,7 +125,6 @@ Configuration for log digests per email:
 
     # Max bytes of digest-log-file to be kept 
     # (optional, default: 5 MB).
-    ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/
     ckanext.maillog.digest.max_bytes=200000
 
     # Maximum number of backup digest-log-files to be kept
