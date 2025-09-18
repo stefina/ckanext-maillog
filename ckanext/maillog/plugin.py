@@ -1,3 +1,5 @@
+import os.path
+
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
@@ -19,35 +21,37 @@ class MaillogPlugin(plugins.SingletonPlugin):
         return get_commands()
 
     def make_middleware(self, app, config):
-        CKAN_MAILLOG_ENABLE_ALERT = toolkit.asbool(config.get("ckanext.maillog.alert", False))
-        CKAN_MAILLOG_ENABLE_DIGEST = toolkit.asbool(config.get("ckanext.maillog.digest", False))
-        if CKAN_MAILLOG_ENABLE_DIGEST:
+        enable_alert = toolkit.asbool(config.get("ckanext.maillog.alert", False))
+        enable_digest = toolkit.asbool(config.get("ckanext.maillog.digest", False))
+        if enable_digest:
             self.make_maillog_digest_middleware(app, config)
-        if CKAN_MAILLOG_ENABLE_ALERT:
+        if enable_alert:
             self.make_maillog_alert_middleware(app, config)
         return app
 
     def make_maillog_digest_middleware(self, app, config):
-        CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME = self._parse_log_level("ckanext.maillog.digest.log_level", "WARNING")
-        CKAN_MAILLOG_DIGEST_LOGGERS = config.get("ckanext.maillog.digest.loggers", None)
-        CKAN_MAILLOG_DIGEST_MAX_BYTES = int(config.get("ckanext.maillog.digest.max_bytes", 5 * 1024 * 1024))  # 5 MB
-        CKAN_MAILLOG_DIGEST_BACKUP_COUNT = int(config.get("ckanext.maillog.digest.backup_count", 1))
+        digest_log_level_name = self._parse_log_level("ckanext.maillog.digest.log_level", "WARNING")
+        digest_loggers = config.get("ckanext.maillog.digest.loggers", None)
+        digest_max_bytes = int(config.get("ckanext.maillog.digest.max_bytes", 5 * 1024 * 1024))  # 5 MB
+        digest_backup_count = int(config.get("ckanext.maillog.digest.backup_count", 1))
 
-        CKAN_MAILLOG_DIGEST_LOG_PATH = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
-        Path(CKAN_MAILLOG_DIGEST_LOG_PATH).parent.mkdir(parents=True, exist_ok=True)
+        digest_log_name = config.get("ckanext.maillog.digest.log_name", "debug.log")
+        digest_log_path = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/")
+        digest_full_path = os.path.join(digest_log_path, digest_log_name)
+        Path(digest_full_path).parent.mkdir(parents=True, exist_ok=True)
 
         file_handler = RotatingFileHandler(
-            CKAN_MAILLOG_DIGEST_LOG_PATH,
-            maxBytes=CKAN_MAILLOG_DIGEST_MAX_BYTES,
-            backupCount=CKAN_MAILLOG_DIGEST_BACKUP_COUNT,
+            digest_full_path,
+            maxBytes=digest_max_bytes,
+            backupCount=digest_backup_count,
             encoding="utf-8",
             delay=True
         )
-        file_handler.setLevel(CKAN_MAILLOG_DIGEST_LOG_LEVEL_NAME)
+        file_handler.setLevel(digest_log_level_name)
         file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-5.5s [%(name)s] %(message)s"))
 
-        if CKAN_MAILLOG_DIGEST_LOGGERS:
-            loggers = CKAN_MAILLOG_DIGEST_LOGGERS.split()
+        if digest_loggers:
+            loggers = digest_loggers.split()
         else:
             loggers = ["", "ckan", "ckanext", "ckanext.maillog"]
         for name in loggers:
@@ -60,9 +64,9 @@ class MaillogPlugin(plugins.SingletonPlugin):
 
     def make_maillog_alert_middleware(self, app, config):
 
-        CKAN_MAILLOG_ALERT_LOGGERS = config.get("ckanext.maillog.alert.loggers", None)
-        CKAN_MAILLOG_ALERT_TO = config.get("ckanext.maillog.alert.to", config.get('email_to'))
-        CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME = self._parse_log_level("ckanext.maillog.alert.log_level", "ERROR")
+        alert_loggers = config.get("ckanext.maillog.alert.loggers", None)
+        alert_to = config.get("ckanext.maillog.alert.to", config.get('email_to'))
+        alert_log_level_name = self._parse_log_level("ckanext.maillog.alert.log_level", "ERROR")
 
         smtp_server = config.get('smtp.server')
         if ":" in smtp_server:
@@ -80,15 +84,15 @@ class MaillogPlugin(plugins.SingletonPlugin):
         mail_handler = SMTPHandler(
             mailhost=mailhost,
             fromaddr=config.get('error_email_from'),
-            toaddrs=[CKAN_MAILLOG_ALERT_TO],
+            toaddrs=[alert_to],
             subject='CKAN Event Report',
             credentials=credentials,
             secure=secure
         )
-        mail_handler.setLevel(CKAN_MAILLOG_ALERT_LOG_LEVEL_NAME)
+        mail_handler.setLevel(alert_log_level_name)
 
-        if CKAN_MAILLOG_ALERT_LOGGERS:
-            loggers = CKAN_MAILLOG_ALERT_LOGGERS.split()
+        if alert_loggers:
+            loggers = alert_loggers.split()
         else:
             loggers = ["", "ckan", "ckanext"]
         for name in loggers:

@@ -1,7 +1,12 @@
 import click
-import smtplib
 import logging
+import mimetypes
+import os
+import smtplib
+from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email import encoders
 import ckan.plugins.toolkit as toolkit
 
 log = logging.getLogger(__name__)
@@ -38,17 +43,34 @@ def send_logs(cleanup):
     else:
         mailhost = smtp_server
 
-    CKAN_MAILLOG_DIGEST_LOG_PATH = toolkit.config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
-    with open(CKAN_MAILLOG_DIGEST_LOG_PATH, "r") as f:
-        body = f.read().strip()
-    if not body.strip():
-        click.echo("No log messages have been recorded since the last run.")
-        body = "No log messages have been recorded since the last run."
+    digest_log_path = toolkit.config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/")
 
-    msg = MIMEText(body, _charset="utf-8")
+    files = [os.path.join(digest_log_path, f) for f in os.listdir(digest_log_path)]
+    files = [f for f in files if os.path.isfile(f)]
+
+    msg = MIMEMultipart()
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = to_addr
+
+    if files:
+        body_text = f"Attached {len(files)} log file(s) from {digest_log_path}."
+    else:
+        body_text = f"No log files found in {digest_log_path}."
+    msg.attach(MIMEText(body_text, _charset="utf-8"))
+
+    for path in files:
+        ctype, encoding = mimetypes.guess_type(path)
+        if ctype is None or encoding is not None:
+            ctype = "application/octet-stream"
+        maintype, subtype = ctype.split("/", 1)
+
+        with open(path, "rb") as fp:
+            part = MIMEBase(maintype, subtype)
+            part.set_payload(fp.read())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment", filename=os.path.basename(path))
+        msg.attach(part)
 
     with smtplib.SMTP(*mailhost, timeout=10) as smtp:
         if toolkit.config.get("smtp.starttls"):
@@ -61,8 +83,9 @@ def send_logs(cleanup):
 
         smtp.sendmail(from_addr, [to_addr], msg.as_string())
 
-    click.echo(f"Sent {CKAN_MAILLOG_DIGEST_LOG_PATH} to {to_addr} via {smtp_server}")
+    click.echo(f"Sent {digest_log_path} to {to_addr} via {smtp_server}")
 
     if cleanup:
-        click.echo(f"Cleaning up {CKAN_MAILLOG_DIGEST_LOG_PATH}")
-        open(CKAN_MAILLOG_DIGEST_LOG_PATH, "w").close()
+        click.echo(f"Cleaning up {digest_log_path}")
+        for path in files:
+            open(path, "w").close()

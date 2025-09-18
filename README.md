@@ -19,7 +19,7 @@ This is useful for catching critical issues as they happen — for example, when
 
 ## Log digests
 
-In digest mode, log messages are collected into a designated file instead of being emailed one by one. Later, you can trigger a command (or run it via cron) to send the accumulated messages as a single email.
+In digest mode, log messages are collected into a designated digest-log instead of being emailed one by one. Later, you can trigger a command (or run it via cron) to send the accumulated files as attachments, including the messages as a single email.
 
 This is especially handy for debugging when:
 
@@ -29,13 +29,13 @@ This is especially handy for debugging when:
 
 - You’re developing a new plugin and need to review its behavior over a period of time.
 
-Each digest email contains all log messages from the configured loggers since the last time the digest was sent.
+Each digest email contains all files (the most recent log-file plus the backup-files produced from log-rotation) including all log messages from the configured loggers as attachment.
 
 ### Log Digest Cli Command
 
-To send all previously accumulated log messages of the configured loggers since the last time the digest was sent.
+To send all previously accumulated log files of the configured loggers since the last time the digest was sent.
 
-It is meant to be run regularly by a cronjob. It is recommended to run it with the cleanup option which clears the file after the logs have been sent.
+It is meant to be run regularly by a cronjob. It is recommended to run it with the cleanup option to make sure you don't receive the same log messages multiple times.
 
 ```bash
 ckan maillog send_logs --cleanup 
@@ -115,13 +115,16 @@ Configuration for log digests per email:
     # (optional, default: WARNING).
     ckanext.maillog.digest.log_level = DEBUG
 
-    # Full path of the digest log 
-    # (optional, default: /srv/app/log/maillog/debug.log).
-    ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/debug.log
+    # Name of the digest log 
+    # (optional, default: debug.log).
+    ckanext.maillog.digest.log_name = my-plugin_warning.log
+    
+    # Path of the digest log 
+    # (optional, default: /srv/app/log/maillog/).
+    ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/
 
     # Max bytes of digest-log-file to be kept 
     # (optional, default: 5 MB).
-    ckanext.maillog.digest.log_path = /srv/app/log/ckanext-myplugin/debug.log
     ckanext.maillog.digest.max_bytes=200000
 
     # Maximum number of backup digest-log-files to be kept
