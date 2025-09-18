@@ -1,3 +1,5 @@
+import os.path
+
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
@@ -33,11 +35,13 @@ class MaillogPlugin(plugins.SingletonPlugin):
         digest_max_bytes = int(config.get("ckanext.maillog.digest.max_bytes", 5 * 1024 * 1024))  # 5 MB
         digest_backup_count = int(config.get("ckanext.maillog.digest.backup_count", 1))
 
-        digest_log_path = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/debug.log")
-        Path(digest_log_path).parent.mkdir(parents=True, exist_ok=True)
+        digest_log_name = config.get("ckanext.maillog.digest.log_name", "debug.log")
+        digest_log_path = config.get("ckanext.maillog.digest.log_path", "/srv/app/log/maillog/")
+        digest_full_path = os.path.join(digest_log_path, digest_log_name)
+        Path(digest_full_path).parent.mkdir(parents=True, exist_ok=True)
 
         file_handler = RotatingFileHandler(
-            digest_log_path,
+            digest_full_path,
             maxBytes=digest_max_bytes,
             backupCount=digest_backup_count,
             encoding="utf-8",
